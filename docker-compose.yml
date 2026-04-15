@@ -1,16 +1,21 @@
-version: '3.8'
-
 services:
   banana-gen-control-panel:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
+        - VITE_SUPABASE_PUBLISHABLE_KEY=${VITE_SUPABASE_PUBLISHABLE_KEY}
+        - VITE_N8N_DOMAIN=${VITE_N8N_DOMAIN}
+        - VITE_GEMINI_API_KEY=${VITE_GEMINI_API_KEY}
     container_name: banana-gen-control-panel
     restart: unless-stopped
     ports:
       - "3000:80"
     environment:
       - NODE_ENV=production
+    env_file:
+      - .env
     networks:
       - banana-gen-network
     healthcheck:
