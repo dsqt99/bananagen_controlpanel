@@ -694,16 +694,17 @@ function renderDataTable() {
     return 0;
   };
 
+  const isOutputColumn = (col) => col.startsWith('output_');
+
   const showCols = csvColumnOrder.filter(c => columns.includes(c));
   // Add remaining columns not in CSV order
   columns.forEach(c => {
     if (!showCols.includes(c)) showCols.push(c);
   });
 
-  const truncate = (val, len = 50) => {
+  const truncate = (val) => {
     if (!val) return '';
-    const s = String(val);
-    return s.length > len ? s.substring(0, len) + '...' : s;
+    return String(val);
   };
 
   const isUrl = (val) => val && typeof val === 'string' && (val.startsWith('http') || val.startsWith('//'));
@@ -711,26 +712,41 @@ function renderDataTable() {
   let html = `<table class="data-table">
     <thead><tr>${showCols.map(c => {
     const stepNum = getStepForColumn(c);
-    return `<th class="step-${stepNum}-col">${c}</th>`;
-  }).join('')}</tr></thead>
+    const isOutput = isOutputColumn(c) ? ' output-col' : '';
+    return `<th class="step-${stepNum}-col${isOutput}">${c}</th>`;
+  }).join('')}<th class="action-col">Thao tác</th></tr></thead>
     <tbody>`;
 
   data.forEach((row, rowIdx) => {
+    const rowId = row.id;
     html += `<tr class="data-row" data-row-index="${rowIdx}">`;
     showCols.forEach(col => {
       const val = row[col];
       const stepNum = getStepForColumn(col);
       const stepClass = `step-${stepNum}-col`;
+      const isOutput = isOutputColumn(col) ? ' output-col' : '';
+      const dataCol = `data-col="${col}"`;
 
       if (col === 'status') {
         const cls = val === 'Done' ? 'status-done' : val === 'Running' ? 'status-running' : '';
-        html += `<td class="status-cell ${cls} ${stepClass}">${val || ''}</td>`;
+        html += `<td class="status-cell ${cls} ${stepClass}${isOutput}" ${dataCol}>${val || ''}</td>`;
       } else if (isUrl(val)) {
-        html += `<td class="url-cell ${stepClass}" title="${val}"><a href="${val}" target="_blank" style="color:inherit;text-decoration:inherit;">${truncate(val, 40)}</a></td>`;
+        html += `<td class="url-cell ${stepClass}${isOutput}" title="${val}" ${dataCol}><a href="${val}" target="_blank" style="color:inherit;text-decoration:inherit;">${truncate(val)}</a></td>`;
       } else {
-        html += `<td class="${stepClass}" title="${(val || '').toString().replace(/"/g, '&quot;')}">${truncate(val)}</td>`;
+        html += `<td class="${stepClass}${isOutput}" title="${(val || '').toString().replace(/"/g, '&quot;')}" ${dataCol}>${truncate(val)}</td>`;
       }
     });
+    // Delete button cell
+    html += `<td class="action-col" data-row-id="${rowId}">
+      <button class="row-delete-btn" data-row-index="${rowIdx}" title="Xóa hàng">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6l-1 14H6L5 6"/>
+          <path d="M10 11v6M14 11v6"/>
+          <path d="M9 6V4h6v2"/>
+        </svg>
+      </button>
+    </td>`;
     html += '</tr>';
   });
 
@@ -738,12 +754,85 @@ function renderDataTable() {
   wrapper.innerHTML = html;
 
   wrapper.querySelectorAll('.data-row').forEach((rowEl) => {
-    rowEl.addEventListener('click', (e) => {
+    rowEl.addEventListener('click', async (e) => {
       if (e.target.closest('a')) return;
+
+      const deleteBtn = e.target.closest('.row-delete-btn');
+      if (deleteBtn) {
+        e.stopPropagation();
+        const rowIndex = parseInt(deleteBtn.dataset.rowIndex, 10);
+        const rowData = data[rowIndex];
+        if (!rowData?.id) {
+          showToast('Không tìm thấy ID để xóa', 'error');
+          return;
+        }
+
+        const { error } = await supabase.from(TABLE_NAME).delete().eq('id', rowData.id);
+        if (error) {
+          showToast(`Xóa thất bại: ${error.message}`, 'error');
+          return;
+        }
+
+        state.supabaseData = state.supabaseData.filter(item => item.id !== rowData.id);
+        renderDataTable();
+        showToast(`Đã xóa dòng "${rowData.image_name || rowData.id}"`, 'success');
+        return;
+      }
+
+      const clickedCell = e.target.closest('td[data-col]');
+      if (!clickedCell) return;
+
+      const col = clickedCell.dataset.col;
       const rowIndex = parseInt(rowEl.dataset.rowIndex, 10);
-      fillPipelineFromDataRow(data[rowIndex]);
+      const rowData = data[rowIndex];
+
+      if (col === 'image_name') {
+        fillPipelineFromDataRow(rowData);
+        return;
+      }
+
+      const textToCopy = rowData?.[col] == null ? '' : String(rowData[col]);
+      try {
+        await navigator.clipboard.writeText(textToCopy);
+        showToast(`Đã copy ô "${col}"`, 'success');
+      } catch {
+        showToast('Copy thất bại', 'error');
+      }
     });
   });
+
+  // Column resize functionality
+  const table = wrapper.querySelector('.data-table');
+  if (table) {
+    const ths = table.querySelectorAll('th');
+    ths.forEach((th) => {
+      const resizer = document.createElement('div');
+      resizer.className = 'column-resizer';
+      th.appendChild(resizer);
+
+      let startX, startWidth;
+      resizer.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        startX = e.pageX;
+        startWidth = th.offsetWidth;
+
+        const onMouseMove = (e) => {
+          const width = startWidth + (e.pageX - startX);
+          th.style.width = `${Math.max(60, width)}px`;
+          th.style.minWidth = `${Math.max(60, width)}px`;
+        };
+
+        const onMouseUp = () => {
+          document.removeEventListener('mousemove', onMouseMove);
+          document.removeEventListener('mouseup', onMouseUp);
+        };
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+      });
+    });
+  }
 }
 
 // ===== Init =====

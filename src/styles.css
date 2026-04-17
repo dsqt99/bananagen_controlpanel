@@ -708,6 +708,17 @@ body::before {
 }
 
 /* ===== Data Table ===== */
+/* Data table note */
+.data-note {
+  font-size: 0.78rem;
+  color: rgba(148, 163, 184, 0.7);
+  margin: 6px 0 10px;
+  padding: 6px 10px;
+  background: rgba(99, 102, 241, 0.05);
+  border-radius: 6px;
+  border-left: 3px solid var(--accent);
+}
+
 .data-section {
   display: flex;
   flex-direction: column;
@@ -742,6 +753,60 @@ body::before {
   z-index: 10;
 }
 
+/* Sticky columns: status (col 1) and image_name (col 2) */
+.data-table th:nth-child(1),
+.data-table td:nth-child(1),
+.data-table th:nth-child(2),
+.data-table td:nth-child(2) {
+  position: sticky;
+}
+
+.data-table th:nth-child(1),
+.data-table td:nth-child(1) {
+  left: 0;
+}
+
+.data-table th:nth-child(2),
+.data-table td:nth-child(2) {
+  left: 80px;
+}
+
+.data-table td:nth-child(1),
+.data-table td:nth-child(2) {
+  z-index: 40;
+  background: #1e293b;
+  background-clip: padding-box;
+}
+
+.data-table th:nth-child(1),
+.data-table th:nth-child(2) {
+  z-index: 41;
+  background: #4f46e5;
+  background-clip: padding-box;
+}
+
+.data-table td:nth-child(1)::after,
+.data-table td:nth-child(2)::after,
+.data-table th:nth-child(1)::after,
+.data-table th:nth-child(2)::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: inherit;
+  z-index: -1;
+}
+
+.data-table td:nth-child(1),
+.data-table th:nth-child(1) {
+  box-shadow: 2px 0 0 #0f172a;
+}
+
+.data-table td:nth-child(2),
+.data-table th:nth-child(2) {
+  box-shadow: 2px 0 0 #0f172a, 6px 0 12px rgba(15, 23, 42, 0.35);
+}
+
+/* Column resize handle - base styles */
 .data-table th {
   background: rgba(99, 102, 241, 0.1);
   color: var(--text-accent);
@@ -753,6 +818,27 @@ body::before {
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  overflow: hidden;
+  min-width: 60px;
+  position: relative;
+  width: auto;
+}
+
+/* Column resizer handle */
+.column-resizer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 8px;
+  height: 100%;
+  cursor: col-resize;
+  background: linear-gradient(to right, transparent, rgba(0,0,0,0.15));
+  user-select: none;
+  z-index: 10;
+}
+
+.column-resizer:hover {
+  background: linear-gradient(to right, transparent, rgba(99, 102, 241, 0.5));
 }
 
 .data-table td {
@@ -855,6 +941,60 @@ body::before {
 
 .data-table tr:hover .step-6-col {
   background: rgba(168, 85, 247, 0.15);
+}
+
+/* Output columns: red styling */
+.data-table .output-col {
+  color: var(--danger, #ef4444) !important;
+  background: rgba(239, 68, 68, 0.06) !important;
+  font-weight: 500;
+}
+
+.data-table tr:hover .output-col {
+  background: rgba(239, 68, 68, 0.12) !important;
+}
+
+/* Action column */
+.data-table .action-col {
+  text-align: center;
+  padding: 6px 10px;
+  min-width: 50px;
+  background: var(--bg-card) !important;
+  position: sticky;
+  right: 0;
+  z-index: 20;
+  box-shadow: -2px 0 4px rgba(0, 0, 0, 0.1);
+}
+
+.data-table th.action-col {
+  background: rgba(99, 102, 241, 0.15) !important;
+  z-index: 26;
+}
+
+.data-table tr:hover .action-col {
+  background: rgba(99, 102, 241, 0.05) !important;
+}
+
+/* Delete button */
+.row-delete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: rgba(148, 163, 184, 0.7);
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: color 0.2s, background 0.2s;
+  display: inline-flex;
+  align-items: center;
+}
+
+.row-delete-btn:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.row-delete-btn:active {
+  background: rgba(239, 68, 68, 0.2);
 }
 
 /* ===== Toast ===== */
