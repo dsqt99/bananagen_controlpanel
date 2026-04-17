@@ -826,7 +826,9 @@ function renderDataTable() {
   const table = wrapper.querySelector('.data-table');
   if (table) {
     const ths = table.querySelectorAll('th');
-    ths.forEach((th) => {
+    ths.forEach((th, index) => {
+      if (index === 0 || index === 1 || th.classList.contains('action-col')) return;
+
       const resizer = document.createElement('div');
       resizer.className = 'column-resizer';
       th.appendChild(resizer);
@@ -840,8 +842,8 @@ function renderDataTable() {
 
         const onMouseMove = (e) => {
           const width = startWidth + (e.pageX - startX);
-          th.style.width = `${Math.max(60, width)}px`;
-          th.style.minWidth = `${Math.max(60, width)}px`;
+          th.style.width = `${Math.max(20, width)}px`;
+          th.style.minWidth = '20px';
         };
 
         const onMouseUp = () => {
