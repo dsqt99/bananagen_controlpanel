@@ -9,37 +9,37 @@ const state = {
   steps: [
     {
       id: 1, state_key: 'run_1', label: 'Step 1 - Khởi tạo', type: 'required',
-      input_url: '', prompt: '', ref_url: '', output_url: '',
+      input_url: '', prompt: '', ref_url: '', output_url: '', aspect_ratio: 'auto',
       input_required: true, prompt_required: true, ref_required: false,
       status: 'idle', expanded: true,
     },
     {
       id: 2, state_key: 'run_2', label: 'Step 2 - Biến đổi', type: 'optional',
-      input_url: '', prompt: '', ref_url: '', output_url: '',
+      input_url: '', prompt: '', ref_url: '', output_url: '', aspect_ratio: 'auto',
       input_required: false, prompt_required: false, ref_required: false,
       autoInput: true, status: 'idle', expanded: false,
     },
     {
       id: 3, state_key: 'run_3', label: 'Step 3 - Tinh chỉnh', type: 'optional',
-      input_url: '', prompt: '', ref_url: '', output_url: '',
+      input_url: '', prompt: '', ref_url: '', output_url: '', aspect_ratio: 'auto',
       input_required: false, prompt_required: false, ref_required: false,
       autoInput: true, status: 'idle', expanded: false,
     },
     {
       id: 4, state_key: 'run_4', label: 'Step 4 - Nâng cấp', type: 'optional',
-      input_url: '', prompt: '', ref_url: '', output_url: '',
+      input_url: '', prompt: '', ref_url: '', output_url: '', aspect_ratio: 'auto',
       input_required: false, prompt_required: false, ref_required: false,
       autoInput: true, status: 'idle', expanded: false,
     },
     {
       id: 5, state_key: 'run_5', label: 'Step 5 - Hoàn thiện', type: 'optional',
-      input_url: '', prompt: '', ref_url: '', output_url: '',
+      input_url: '', prompt: '', ref_url: '', output_url: '', aspect_ratio: 'auto',
       input_required: false, prompt_required: false, ref_required: false,
       autoInput: true, status: 'idle', expanded: false,
     },
     {
       id: 6, state_key: 'run_6', label: 'Step 6 - Tùy chỉnh', type: 'optional',
-      input_url: '', prompt: '', ref_url: '', output_url: '',
+      input_url: '', prompt: '', ref_url: '', output_url: '', aspect_ratio: 'auto',
       prompts6: { a: '', b: '', c: '', d: '', e: '', f: '', g: '' },
       outputs6: { a: '', b: '', c: '', d: '', e: '', f: '', g: '' },
       input_required: false, prompt_required: false, ref_required: false,
@@ -143,8 +143,7 @@ function renderStep(step, idx) {
       : step.status === 'error' ? 'error'
         : '';
 
-  // For steps 2-6 (autoInput), hide input URL field
-  const showInputField = !step.autoInput;
+  const displayInputValue = step.input_url || effectiveInput || '';
 
   const step6PromptFieldsHtml = idx === 5
     ? ['a', 'b', 'c', 'd', 'e', 'f', 'g'].map(key => `
@@ -192,27 +191,23 @@ function renderStep(step, idx) {
       </div>
       <div class="step-body">
         <div class="step-content">
-          ${showInputField ? `
           <div class="step-field">
             <label class="field-label">
               Ảnh đầu vào ${step.input_required ? '<span class="field-required">*</span>' : ''}
             </label>
+            ${step.autoInput && idx > 0 ? `
+            <div class="auto-fill-indicator">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17l9.2-9.2M17 17V7H7"/></svg>
+              Input: tự động lấy từ output step trước (có thể sửa)
+            </div>
+            ` : ''}
             <div class="input-with-preview">
               <input type="text" class="field-input step-input-url"
                 data-step="${idx}"
                 placeholder="Nhập URL ảnh đầu vào..."
-                value="${step.input_url}" />
+                value="${displayInputValue}" />
             </div>
           </div>
-          ` : `
-          <div class="step-field">
-            <div class="auto-fill-indicator">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17l9.2-9.2M17 17V7H7"/></svg>
-              Input: tự động lấy từ output step trước
-            </div>
-            ${effectiveInput ? `<div class="auto-fill-url" title="${effectiveInput}">${effectiveInput}</div>` : ''}
-          </div>
-          `}
           ${idx === 5 ? `
             ${step6PromptFieldsHtml}
           ` : `
@@ -237,6 +232,22 @@ function renderStep(step, idx) {
             </div>
           </div>
           ` : ''}
+          <div class="step-field">
+            <label class="field-label">Kích thước ảnh output</label>
+            <select class="field-select step-aspect-ratio" data-step="${idx}">
+              <option value="auto" ${step.aspect_ratio === 'auto' ? 'selected' : ''}>Auto</option>
+              <option value="1:1" ${step.aspect_ratio === '1:1' ? 'selected' : ''}>1:1</option>
+              <option value="9:16" ${step.aspect_ratio === '9:16' ? 'selected' : ''}>9:16</option>
+              <option value="16:9" ${step.aspect_ratio === '16:9' ? 'selected' : ''}>16:9</option>
+              <option value="3:4" ${step.aspect_ratio === '3:4' ? 'selected' : ''}>3:4</option>
+              <option value="4:3" ${step.aspect_ratio === '4:3' ? 'selected' : ''}>4:3</option>
+              <option value="3:2" ${step.aspect_ratio === '3:2' ? 'selected' : ''}>3:2</option>
+              <option value="2:3" ${step.aspect_ratio === '2:3' ? 'selected' : ''}>2:3</option>
+              <option value="5:4" ${step.aspect_ratio === '5:4' ? 'selected' : ''}>5:4</option>
+              <option value="4:5" ${step.aspect_ratio === '4:5' ? 'selected' : ''}>4:5</option>
+              <option value="21:9" ${step.aspect_ratio === '21:9' ? 'selected' : ''}>21:9</option>
+            </select>
+          </div>
         </div>
         <div class="step-actions">
           ${outputUrlHtml}
@@ -296,6 +307,14 @@ function bindStepEvents() {
     el.addEventListener('input', (e) => {
       const idx = parseInt(e.target.dataset.step);
       state.steps[idx].ref_url = e.target.value;
+    });
+  });
+
+  // Aspect ratio
+  document.querySelectorAll('.step-aspect-ratio').forEach(el => {
+    el.addEventListener('change', (e) => {
+      const idx = parseInt(e.target.dataset.step);
+      state.steps[idx].aspect_ratio = e.target.value;
     });
   });
 
@@ -422,6 +441,7 @@ async function runStep(idx) {
           ref_image_url: '',
           image_name: imageName,
           model_id: modelId,
+          aspect_ratio: step.aspect_ratio || 'auto',
         };
 
         const response = await fetch(`${n8n_domain}/webhook/bananagen`, {
@@ -463,6 +483,7 @@ async function runStep(idx) {
       ref_image_url: step.ref_url || '',
       image_name: imageName,
       model_id: modelId,
+      aspect_ratio: step.aspect_ratio || 'auto',
     };
 
     const response = await fetch(`${n8n_domain}/webhook/bananagen`, {
